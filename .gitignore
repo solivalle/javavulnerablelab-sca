@@ -1,0 +1,8 @@
+mysql-data/
+target/
+*.war
+*.class
+.idea/
+*.iml
+.vscode/
+.DS_Store

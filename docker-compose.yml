@@ -1,0 +1,25 @@
+
+services:
+  jvl:
+    image: cspf/jvl
+    build: 
+        dockerfile: ./Dockerfile
+        context: ./
+    ports:
+      - 9080:8080
+    links: 
+      - mysql
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: abc
+    command:
+      - "--default-authentication-plugin=mysql_native_password"
+      - "--max_connections=500"
+      - "--wait_timeout=120"
+      - "--interactive_timeout=120"
+    volumes:
+      - ./mysql-data:/var/lib/mysql

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiJARLocking="true" path="/JavaVulnerableLab" useHttpOnly="false">
+    <Resource name="jdbc/jvl"
+              auth="Container"
+              type="javax.sql.DataSource"
+              factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+              driverClassName="com.mysql.jdbc.Driver"
+              url="jdbc:mysql://mysql:3306/abc?useSSL=false&amp;autoReconnect=true"
+              username="root"
+              password="root"
+              initialSize="5"
+              minIdle="5"
+              maxIdle="20"
+              maxActive="50"
+              maxWait="10000"
+              removeAbandoned="true"
+              removeAbandonedTimeout="60"
+              logAbandoned="true"
+              testOnBorrow="true"
+              validationQuery="SELECT 1"
+              validationInterval="30000"/>
+</Context>
