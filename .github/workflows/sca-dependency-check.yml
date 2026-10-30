@@ -13,7 +13,6 @@ jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
     runs-on: ubuntu-latest # Ejecuta el trabajo en una máquina virtual Ubuntu hospedada por GitHub.
     env: # Define variables de entorno disponibles para los pasos del trabajo.
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }} # Lee la clave desde el secreto de GitHub sin incluir su valor en el YAML.
-      DEPENDENCY_CHECK_DATA: ${{ runner.temp }}/dependency-check-data # Fija la carpeta de la base NVD que se guardará en caché.
     steps: # Enumera las acciones realizadas para preparar, analizar y publicar resultados.
       - name: Checkout repository # Identifica el paso que descarga el código del repositorio.
         uses: actions/checkout@v4 # Descarga el commit que activó el workflow.
@@ -26,11 +25,11 @@ jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
       - name: Cache Dependency-Check NVD database # Identifica la caché reutilizable de la base de vulnerabilidades.
         uses: actions/cache@v4 # Restaura la base de NVD y la guarda si aún no existe.
         with: # Define la ruta y la clave de la caché.
-          path: ${{ runner.temp }}/dependency-check-data # Guarda la base en la misma ruta configurada para Dependency-Check.
-          key: dependency-check-${{ runner.os }}-v13-${{ github.run_id }}-${{ github.run_attempt }} # Guarda la base actualizada con una clave nueva por ejecución.
-          restore-keys: dependency-check-${{ runner.os }}-v13- # Recupera la caché más reciente de la misma plataforma y versión.
+          path: ~/.dependency-check-data # Guarda la base NVD en una ruta fija del directorio HOME del runner.
+          key: dependency-check-ubuntu-v13-${{ github.run_id }}-${{ github.run_attempt }} # Guarda la base actualizada con una clave nueva por ejecución.
+          restore-keys: dependency-check-ubuntu-v13- # Recupera la caché más reciente del runner Ubuntu y plugin v13.
       - name: Run Dependency-Check # Identifica la ejecución del análisis Maven.
-        run: mvn --batch-mode org.owasp:dependency-check-maven:13.0.0:check -Dformat=HTML,XML,SARIF -DdataDirectory=$DEPENDENCY_CHECK_DATA -DnvdApiKeyEnvironmentVariable=NVD_API_KEY # Genera HTML, XML y SARIF usando la clave del entorno y la base cacheada.
+        run: mvn --batch-mode org.owasp:dependency-check-maven:13.0.0:check -Dformat=HTML,XML,SARIF -DdataDirectory=$HOME/.dependency-check-data -DnvdApiKeyEnvironmentVariable=NVD_API_KEY # Genera HTML, XML y SARIF usando la clave del entorno y la base cacheada.
       - name: Upload SARIF to GitHub Code Scanning # Identifica la publicación de los resultados SARIF.
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # Evita intentar publicar desde pull requests de forks sin permiso de escritura.
         uses: github/codeql-action/upload-sarif@v3 # Sube el archivo SARIF a Security > Code scanning.
