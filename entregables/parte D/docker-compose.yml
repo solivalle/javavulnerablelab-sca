@@ -1,0 +1,4 @@
+name: defectdojo-local
+
+include:
+  - path: ${HOME}/tools/django-DefectDojo/docker-compose.yml
