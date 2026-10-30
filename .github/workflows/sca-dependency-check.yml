@@ -1,0 +1,46 @@
+name: Dependency-Check SCA # Da un nombre reconocible a este workflow en la pestaña Actions.
+on: # Declara los eventos que inician el análisis.
+  push: # Ejecuta el análisis cuando se publica un commit.
+    branches: [main] # Limita el evento push a la rama principal.
+  pull_request: # Ejecuta el análisis para cambios propuestos mediante pull request.
+    branches: [main] # Limita el evento pull request a cambios dirigidos a main.
+  workflow_dispatch: # Permite iniciar el workflow manualmente desde GitHub.
+permissions: # Define los permisos mínimos del GITHUB_TOKEN para este workflow.
+  contents: read # Permite leer el repositorio y descargar su código.
+  security-events: write # Permite publicar el informe SARIF en Code scanning.
+jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
+  dependency-check: # Define el trabajo de análisis de dependencias.
+    runs-on: ubuntu-latest # Ejecuta el trabajo en una máquina virtual Ubuntu hospedada por GitHub.
+    env: # Define variables de entorno disponibles para los pasos del trabajo.
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }} # Lee la clave desde el secreto de GitHub sin incluir su valor en el YAML.
+      DEPENDENCY_CHECK_DATA: ${{ runner.temp }}/dependency-check-data # Fija la carpeta de la base NVD que se guardará en caché.
+    steps: # Enumera las acciones realizadas para preparar, analizar y publicar resultados.
+      - name: Checkout repository # Identifica el paso que descarga el código del repositorio.
+        uses: actions/checkout@v4 # Descarga el commit que activó el workflow.
+      - name: Set up Java 17 # Identifica el paso que instala el JDK requerido.
+        uses: actions/setup-java@v4 # Configura una distribución Java en la máquina virtual.
+        with: # Define las opciones de configuración de setup-java.
+          distribution: temurin # Usa la distribución OpenJDK Temurin.
+          java-version: '17' # Instala y activa Java 17.
+          cache: maven # Cachea también los artefactos descargados por Maven.
+      - name: Cache Dependency-Check NVD database # Identifica la caché reutilizable de la base de vulnerabilidades.
+        uses: actions/cache@v4 # Restaura la base de NVD y la guarda si aún no existe.
+        with: # Define la ruta y la clave de la caché.
+          path: ${{ runner.temp }}/dependency-check-data # Guarda la base en la misma ruta configurada para Dependency-Check.
+          key: dependency-check-${{ runner.os }}-v13-${{ github.run_id }}-${{ github.run_attempt }} # Guarda la base actualizada con una clave nueva por ejecución.
+          restore-keys: dependency-check-${{ runner.os }}-v13- # Recupera la caché más reciente de la misma plataforma y versión.
+      - name: Run Dependency-Check # Identifica la ejecución del análisis Maven.
+        run: mvn --batch-mode org.owasp:dependency-check-maven:13.0.0:check -Dformat=HTML,XML,SARIF -DdataDirectory=$DEPENDENCY_CHECK_DATA -DnvdApiKeyEnvironmentVariable=NVD_API_KEY # Genera HTML, XML y SARIF usando la clave del entorno y la base cacheada.
+      - name: Upload SARIF to GitHub Code Scanning # Identifica la publicación de los resultados SARIF.
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # Evita intentar publicar desde pull requests de forks sin permiso de escritura.
+        uses: github/codeql-action/upload-sarif@v3 # Sube el archivo SARIF a Security > Code scanning.
+        with: # Define la ubicación y categoría del análisis SARIF.
+          sarif_file: target/dependency-check-report.sarif # Selecciona el SARIF creado por el plugin Maven.
+          category: dependencycheck # Identifica este análisis con la categoría dependencycheck.
+      - name: Upload HTML and XML reports # Identifica el paso que conserva los informes descargables.
+        if: always() # Intenta publicar los reportes aunque el escaneo termine con hallazgos o error.
+        uses: actions/upload-artifact@v4 # Guarda los archivos como artefacto descargable de la ejecución.
+        with: # Define el nombre y los archivos incluidos en el artefacto.
+          name: dependency-check-reports # Nombra el artefacto con los informes del análisis.
+          path: target/dependency-check-report.* # Incluye HTML, XML y SARIF como artefactos descargables.
+          if-no-files-found: warn # Advierte si el escaneo no llegó a generar los reportes.
