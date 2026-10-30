@@ -17,7 +17,7 @@ jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
       - name: Checkout repository # Identifica el paso que descarga el código del repositorio.
         uses: actions/checkout@v4 # Descarga el commit que activó el workflow.
       - name: Set up Java 17 # Identifica el paso que instala el JDK requerido.
-        uses: actions/setup-java@v4 # Configura una distribución Java en la máquina virtual.
+        uses: actions/setup-java@v5 # Configura una distribución Java en la máquina virtual usando la versión mantenida.
         with: # Define las opciones de configuración de setup-java.
           distribution: temurin # Usa la distribución OpenJDK Temurin.
           java-version: '17' # Instala y activa Java 17.
