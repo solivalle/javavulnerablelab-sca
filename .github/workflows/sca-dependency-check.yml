@@ -29,7 +29,7 @@ jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
           key: dependency-check-ubuntu-v13-${{ github.run_id }}-${{ github.run_attempt }} # Guarda la base actualizada con una clave nueva por ejecución.
           restore-keys: dependency-check-ubuntu-v13- # Recupera la caché más reciente del runner Ubuntu y plugin v13.
       - name: Run Dependency-Check # Identifica la ejecución del análisis Maven.
-        run: mvn --batch-mode org.owasp:dependency-check-maven:13.0.0:check -Dformat=HTML,XML,SARIF -DdataDirectory=$HOME/.dependency-check-data -DnvdApiKeyEnvironmentVariable=NVD_API_KEY # Genera HTML, XML y SARIF usando la clave del entorno y la base cacheada.
+        run: mvn --batch-mode org.owasp:dependency-check-maven:13.0.0:check -Dformats=HTML,XML,SARIF -DdataDirectory=$HOME/.dependency-check-data -DnvdApiKeyEnvironmentVariable=NVD_API_KEY # Genera HTML, XML y SARIF usando la clave del entorno y la base cacheada.
       - name: Upload SARIF to GitHub Code Scanning # Identifica la publicación de los resultados SARIF.
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # Evita intentar publicar desde pull requests de forks sin permiso de escritura.
         uses: github/codeql-action/upload-sarif@v3 # Sube el archivo SARIF a Security > Code scanning.
