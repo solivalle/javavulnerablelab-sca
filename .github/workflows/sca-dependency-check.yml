@@ -43,3 +43,24 @@ jobs: # Agrupa los trabajos ejecutados por GitHub Actions.
           name: dependency-check-reports # Nombra el artefacto con los informes del análisis.
           path: target/dependency-check-report.* # Incluye HTML, XML y SARIF como artefactos descargables.
           if-no-files-found: warn # Advierte si el escaneo no llegó a generar los reportes.
+  cyclonedx-sbom: # Define un segundo trabajo independiente para generar el inventario de dependencias.
+    runs-on: ubuntu-latest # Ejecuta la generación del SBOM en una máquina virtual Ubuntu.
+    permissions: # Limita los permisos de este trabajo a la lectura del repositorio.
+      contents: read # Permite descargar el código para identificar sus dependencias.
+    steps: # Enumera la preparación, generación y publicación del SBOM.
+      - name: Checkout repository # Identifica el paso que descarga el código del repositorio.
+        uses: actions/checkout@v4 # Descarga el commit que activó el workflow.
+      - name: Set up Java 17 # Identifica la preparación del JDK para ejecutar Maven.
+        uses: actions/setup-java@v5 # Configura Java y la caché de dependencias Maven.
+        with: # Define la distribución y versión de Java utilizadas.
+          distribution: temurin # Selecciona la distribución OpenJDK Temurin.
+          java-version: '17' # Activa Java 17 en este trabajo.
+          cache: maven # Reutiliza los artefactos descargados por Maven.
+      - name: Generate CycloneDX SBOM # Identifica la generación del inventario en formato CycloneDX.
+        run: mvn --batch-mode org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom -DoutputFormat=json -DoutputName=bom # Genera target/bom.json con las dependencias directas y transitivas.
+      - name: Upload CycloneDX SBOM # Identifica la publicación del SBOM como artefacto descargable.
+        uses: actions/upload-artifact@v4 # Conserva el archivo generado en los artefactos de la ejecución.
+        with: # Define el nombre del artefacto y el archivo que contiene.
+          name: cyclonedx-sbom # Nombra el artefacto descargable del inventario.
+          path: target/bom.json # Selecciona el SBOM JSON generado por CycloneDX.
+          if-no-files-found: error # Falla si no existe el SBOM esperado para evitar una entrega vacía.
