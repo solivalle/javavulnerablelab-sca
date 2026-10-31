@@ -4,6 +4,8 @@
 
 Automatizar el análisis de composición de software (SCA) de JavaVulnerableLab mediante OWASP Dependency-Check en GitHub Actions. El pipeline identifica dependencias con vulnerabilidades conocidas, genera reportes HTML, XML y SARIF, publica los hallazgos en Code scanning y conserva los informes como artefactos descargables.
 
+Como paso adicional, un segundo job genera un SBOM CycloneDX en formato JSON y lo conserva como artefacto descargable.
+
 La implementación se encuentra en [sca-dependency-check.yml](../../.github/workflows/sca-dependency-check.yml). Esta entrega documenta su configuración y la ejecución registrada en las capturas adjuntas.
 
 ## 1. Activación del workflow y permisos
@@ -91,7 +93,41 @@ La captura general registra el trabajo `dependency-check` como exitoso, con una 
 
 ![Pipeline de GitHub Actions con todos sus pasos completados correctamente](<./Gitflow Workflow Pipeline.png>)
 
-## 4. Correspondencia con los requisitos de la Parte E
+## 4. Paso adicional: generar y publicar el SBOM CycloneDX
+
+Se agregó al mismo workflow un segundo job llamado `cyclonedx-sbom`, independiente de `dependency-check`. Ambos comparten los eventos de activación del workflow y pueden ejecutarse en paralelo, ya que no se define una dependencia mediante `needs`.
+
+Este job se ejecuta en `ubuntu-latest` y limita sus permisos a `contents: read`. Descarga el repositorio con `actions/checkout@v4`, prepara Temurin Java 17 con `actions/setup-java@v5` y habilita la caché de Maven. No requiere la clave del NVD para generar el inventario.
+
+### 4.1. Generar el inventario de componentes
+
+El paso **Generate CycloneDX SBOM** utiliza el plugin Maven de CycloneDX en su versión `2.9.3`:
+
+```bash
+mvn --batch-mode org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom \
+  -DoutputFormat=json \
+  -DoutputName=bom
+```
+
+El objetivo `makeAggregateBom` genera el inventario de dependencias directas y transitivas del proyecto. El resultado se escribe en `target/bom.json`. El SBOM describe los componentes del software y complementa los reportes de vulnerabilidades producidos por Dependency-Check.
+
+### 4.2. Guardar el SBOM como artefacto
+
+El paso **Upload CycloneDX SBOM** utiliza `actions/upload-artifact@v4` para publicar `target/bom.json` con el nombre de artefacto `cyclonedx-sbom`. La opción `if-no-files-found: error` hace fallar el paso si el archivo esperado no existe.
+
+Para descargarlo, se abre el resumen de la ejecución en **Actions** y se selecciona **Artifacts → cyclonedx-sbom**.
+
+### 4.3. Evidencia de ejecución
+
+La captura muestra el job `cyclonedx-sbom` completado correctamente en **12 segundos**. En el log se observa la creación de un **BOM CycloneDX versión 1.6 con 18 componentes**, la escritura y validación del archivo JSON en `target/bom.json` y el resultado **BUILD SUCCESS**. El paso **Upload CycloneDX SBOM** también aparece completado correctamente.
+
+Aunque el log contiene advertencias del validador sobre las palabras clave `meta:enum` y `deprecated`, estas no impidieron que el job terminara exitosamente. En el momento de esta captura, el job `dependency-check` todavía estaba en ejecución; la evidencia de su ejecución exitosa se presenta en la sección anterior.
+
+![Generación correcta del SBOM CycloneDX y publicación del artefacto](./SBOM%20CycloneDX.png)
+
+[Ver imagen de evidencia del SBOM CycloneDX](./SBOM%20CycloneDX.png)
+
+## 5. Correspondencia con los requisitos de la Parte E
 
 | N.º | Requisito | Puntos | Implementación y evidencia |
 |---|---|---:|---|
@@ -106,6 +142,8 @@ La captura general registra el trabajo `dependency-check` como exitoso, con una 
 | 9 | Explicar cada línea del YAML con un comentario. | 4 | Todas las líneas del workflow incluyen un comentario explicativo. |
 | | **Total de la rúbrica** | **30** | |
 
-## 5. Resultado documentado
+## 6. Resultado documentado
 
 Las evidencias muestran una ejecución exitosa del pipeline, la generación de HTML, XML y SARIF, la finalización del paso de carga de artefactos y la publicación de hallazgos en Code scanning. El YAML permite comprobar los eventos configurados, los permisos, la referencia al secreto, la estrategia de caché, la categoría SARIF y los comentarios por línea.
+
+La evidencia adicional confirma que el job `cyclonedx-sbom` generó un inventario CycloneDX 1.6 con 18 componentes y completó la carga del artefacto `cyclonedx-sbom`. Este segundo job amplía el workflow sin modificar los 30 puntos de la rúbrica original.
