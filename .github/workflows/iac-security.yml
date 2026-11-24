@@ -29,7 +29,9 @@ jobs:
 
       - name: Generar reporte SARIF
         run: |
-          checkov -d . --skip-path '^entregables/' --framework dockerfile terraform             --skip-download --soft-fail -o sarif --output-file-path reportes
+          checkov -d . --skip-path 'entregables/|politicas/casos/' \
+            --framework dockerfile terraform --external-checks-dir politicas \
+            --skip-download --soft-fail -o sarif --output-file-path reportes
 
       - name: Publicar artefacto SARIF
         uses: actions/upload-artifact@v4
@@ -48,4 +50,6 @@ jobs:
       - name: Gate Checkov
         if: ${{ !cancelled() }}
         run: |
-          checkov -d . --skip-path '^entregables/' --framework dockerfile terraform             --skip-download --compact --quiet
+          checkov -d . --skip-path 'entregables/|politicas/casos/' \
+            --framework dockerfile terraform --external-checks-dir politicas \
+            --skip-download --compact --quiet

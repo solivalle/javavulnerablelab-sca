@@ -1,0 +1,11 @@
+metadata:
+  id: CKV_ORG_1
+  name: Los buckets S3 deben declarar la etiqueta Environment
+  category: GENERAL_SECURITY
+
+definition:
+  cond_type: attribute
+  resource_types:
+    - aws_s3_bucket
+  attribute: tags.Environment
+  operator: exists

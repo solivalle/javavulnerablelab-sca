@@ -180,11 +180,48 @@ El gate local combinado también devolvió `0` con 47 controles de Dockerfile y 
 
 ## 7. Excepción
 
-Pendiente. Documentar exactamente una excepción en el código y en el informe. Registrar el control, la justificación, la referencia de aprobación, el rol de quien debe aprobarla y la fecha de vencimiento.
+### Paso 7. Verificar la excepción de laboratorio
+
+Se registró una única excepción con `checkov:skip` en `infra/main.tf`. La política `CKV_ORG_2` exige la etiqueta `Owner` en buckets S3. La excepción se limita al recurso `aws_s3_bucket.iac_baseline`.
+
+- Referencia de aprobación simulada: `EXC-IAC-001`. Se usa únicamente para demostrar el proceso en este laboratorio.
+- Justificación: el bucket se usa para análisis estático, no se despliega ni almacena datos. El equipo del curso es responsable del ejemplo y figura en este informe.
+- Riesgo residual: sin `Owner`, un inventario automatizado no puede identificar al responsable a partir del recurso. Se acepta temporalmente por el alcance del ejercicio. Antes de un despliegue, habría que añadir la etiqueta y retirar la excepción.
+- Aprobador que correspondería en un entorno real: responsable de seguridad de infraestructura.
+- Vencimiento: 2026-12-23. El comentario registra la fecha para revisión manual.
+
+```bash
+checkov -d infra --framework terraform --external-checks-dir politicas --check CKV_ORG_2 --compact --skip-download
+echo "Código de salida de Checkov: $?"
+```
+
+![Figura 12. Excepción simulada EXC-IAC-001 en Checkov](capturas/11-excepcion-checkov.png)
+
+*Figura 12. Checkov marcó `CKV_ORG_2` como `SKIPPED` para el bucket de ejemplo y mostró la referencia, su vencimiento y el código de salida 0.*
 
 ## 8. Política propia
 
-Pendiente. Escribir una regla de Checkov en YAML en `politicas/`, integrarla con `--external-checks-dir politicas` y capturar un caso que falla y otro que pasa.
+### Paso 6. Validar la política de etiquetado
+
+La regla `CKV_ORG_1` en `politicas/required_environment_tag.yaml` exige que cada bucket S3 declare la etiqueta `Environment` para identificar su entorno. El workflow carga la regla con `--external-checks-dir politicas` tanto para el SARIF como para el gate. Los ejemplos de `politicas/casos/` se escanean de forma aislada.
+
+| Caso | Configuración | Resultado verificado |
+| --- | --- | --- |
+| `falla.tf` | Tiene la etiqueta `Owner` y carece de `Environment`. | 1 falla, código de salida `1`. |
+| `aprueba.tf` | Declara `Environment = "lab"`. | 1 control aprobado, código de salida `0`. |
+
+```bash
+for caso in falla aprueba; do
+  checkov -f "politicas/casos/$caso.tf" --external-checks-dir politicas --check CKV_ORG_1 --compact --skip-download
+  echo "Código de salida ($caso): $?"
+done
+```
+
+![Figura 11. Verificación de la política de etiquetado CKV_ORG_1](capturas/10-politica-checkov.png)
+
+*Figura 11. Checkov marcó el caso sin Environment como FAILED y devolvió 1. El caso con Environment quedó como PASSED y devolvió 0.*
+
+El gate local con la nueva regla aprobó 17 controles de Terraform y 47 de Dockerfile, con 0 fallas.
 
 ## 9. Conclusiones
 

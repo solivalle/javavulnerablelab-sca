@@ -1,4 +1,5 @@
 resource "aws_s3_bucket" "iac_baseline" {
+  # checkov:skip=CKV_ORG_2:EXC-IAC-001 (aprobación simulada de laboratorio). Bucket de análisis estático sin despliegue ni datos; responsable registrado en el informe. Vence 2026-12-23.
   bucket_prefix = "iac-course-baseline-"
 
   tags = {
