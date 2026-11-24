@@ -120,7 +120,7 @@ Después de activar el ruleset para `main`, GitHub marcó el check `Seguridad Ia
 
 *Figura 7. GitHub muestra la etiqueta Required junto al check fallido y el botón Merge pull request deshabilitado.*
 
-PR de prueba: [#2](https://github.com/solivalle/javavulnerablelab-sca/pull/2). Pendiente confirmar su cierre sin fusionarlo.
+PR de prueba: [#2](https://github.com/solivalle/javavulnerablelab-sca/pull/2). Cerrado sin fusionar, según la confirmación del autor.
 
 ## 5. Evidencia SARIF
 
