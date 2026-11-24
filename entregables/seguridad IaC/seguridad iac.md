@@ -104,15 +104,31 @@ El workflow se ejecuta en cada PR y en cada push a `main`. Escanea Terraform y D
 
 *Figura 5. El workflow se activa en cada `pull_request` y en los `push` a `main`. El job `Escaneo IaC` prepara Python 3.13 e instala Checkov 3.4.5.*
 
-La ejecución del workflow se verificará en GitHub Actions al abrir el PR.
+El log del PR confirma que GitHub Actions ejecutó el workflow y llegó al paso `Gate Checkov`. Los conteos coincidieron con la línea base local.
 
 ## 4. Evidencia del gate
 
-Pendiente. Configurar `main` para exigir PR y el check `Escaneo IaC`. Documentar un PR de prueba de configuración IaC, con enlace, captura del check fallido y captura del merge bloqueado. Cerrar el PR de prueba sin fusionarlo. La práctica se realiza mediante análisis estático.
+En GitHub Actions, `Gate Checkov` reprodujo la línea base local. Fallaron 2 controles del Dockerfile y 6 de Terraform, con 0 omisiones en ambos bloques. El proceso devolvió el código de salida `1`.
+
+![Figura 6. Gate Checkov fallido en GitHub Actions](capturas/05-gate-checkov-fallido.png)
+
+*Figura 6. El log muestra los ocho controles fallidos y el código de salida 1.*
+
+Después de activar el ruleset para `main`, GitHub marcó el check `Seguridad IaC / Escaneo IaC (pull_request)` como obligatorio. El check fallido dejó deshabilitado el botón de merge.
+
+![Figura 7. PR bloqueado por el check obligatorio Escaneo IaC](capturas/06-pr-merge-bloqueado.png)
+
+*Figura 7. GitHub muestra la etiqueta Required junto al check fallido y el botón Merge pull request deshabilitado.*
+
+PR de prueba: [#2](https://github.com/solivalle/javavulnerablelab-sca/pull/2). Pendiente confirmar su cierre sin fusionarlo.
 
 ## 5. Evidencia SARIF
 
-Pendiente. Capturar los hallazgos en GitHub Code Scanning o el artefacto descargable de la ejecución, según la disponibilidad del repositorio.
+GitHub Code Scanning procesó el SARIF de Checkov para el commit `1d37b86` del PR #2. La vista del PR muestra seis alertas nuevas clasificadas como errores en el código modificado. El conteo de esta vista corresponde a las alertas nuevas del PR. El gate reportó ocho fallas en el conjunto de archivos escaneados.
+
+![Figura 8. Alertas nuevas de Checkov en GitHub Code Scanning](capturas/07-sarif-checkov.png)
+
+*Figura 8. GitHub muestra seis alertas nuevas en el check de Code Scanning de Checkov.*
 
 ## 6. Remediación
 
