@@ -27,5 +27,15 @@ COPY default-tomcat.xml /usr/local/tomcat/conf/tomcat-users.xml
 
 ENV CATALINA_OPTS="-Xms256m -Xmx1024m"
 
+RUN useradd --system --user-group --no-create-home tomcat-runtime && \
+    chown -R tomcat-runtime:tomcat-runtime \
+        "$CATALINA_HOME/logs" "$CATALINA_HOME/temp" \
+        "$CATALINA_HOME/work" "$CATALINA_HOME/webapps"
+
+USER tomcat-runtime
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /JavaVulnerableLab/ HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; read -r protocol status rest <&3; [[ "$protocol" == HTTP/* && "$status" == [23][0-9][0-9] ]]'
+
 # CMD to start Tomcat
 CMD ["catalina.sh", "run"]

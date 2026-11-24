@@ -132,7 +132,27 @@ GitHub Code Scanning procesó el SARIF de Checkov para el commit `1d37b86` del P
 
 ## 6. Remediación
 
-Pendiente. Corregir al menos ocho hallazgos en un PR separado, con un commit por tipo de corrección. Registrar ID, recurso, cambio y resultados antes y después. Conservar el enlace al PR fusionado y la captura del check aprobado. La consigna pide aportes de ambos integrantes.
+### Paso 4. Remediar el Dockerfile
+
+En la rama `seguridad-iac-remediacion` se corrigieron los dos hallazgos del Dockerfile.
+
+| ID | Recurso | Cambio aplicado | Antes | Después |
+| --- | --- | --- | --- | --- |
+| CKV_DOCKER_2 | `Dockerfile` | Se añadió un `HEALTHCHECK` que verifica la respuesta HTTP de la aplicación dentro del contenedor. | Fallido | Aprobado |
+| CKV_DOCKER_3 | `Dockerfile` | Tomcat se ejecuta como `tomcat-runtime`, con permisos de escritura en los directorios que necesita. | Fallido | Aprobado |
+
+El análisis estático del Dockerfile registró 47 controles aprobados, 0 fallidos, 0 omitidos y código de salida `0`. Queda pendiente verificar el arranque del contenedor y el estado del chequeo HTTP, ya que el entorno de trabajo no tiene acceso al socket de Docker.
+
+```bash
+checkov -f Dockerfile --framework dockerfile --compact --skip-download --quiet
+echo "Código de salida de Checkov: $?"
+```
+
+![Figura 9. Escaneo estático del Dockerfile tras la remediación](capturas/08-remediacion-dockerfile.png)
+
+*Figura 9. Checkov registró 47 controles aprobados, 0 fallidos, 0 omitidos y código de salida 0.*
+
+Quedan pendientes la remediación de Terraform, los commits por tipo de corrección y el PR de remediación con el check aprobado.
 
 ## 7. Excepción
 
