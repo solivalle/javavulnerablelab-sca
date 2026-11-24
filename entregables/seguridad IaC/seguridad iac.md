@@ -152,7 +152,31 @@ echo "Código de salida de Checkov: $?"
 
 *Figura 9. Checkov registró 47 controles aprobados, 0 fallidos, 0 omitidos y código de salida 0.*
 
-Quedan pendientes la remediación de Terraform, los commits por tipo de corrección y el PR de remediación con el check aprobado.
+### Paso 5. Remediar Terraform
+
+Los seis controles de Terraform pasaron en el análisis estático del bucket `aws_s3_bucket.iac_baseline`.
+
+| ID | Cambio aplicado | Antes | Después |
+| --- | --- | --- | --- |
+| CKV_AWS_21 | Se habilitó el versionado. | Fallido | Aprobado |
+| CKV_AWS_145 | Se configuró cifrado predeterminado con AWS KMS. | Fallido | Aprobado |
+| CKV_AWS_18 | Se configuró el envío de registros de acceso a un bucket dedicado. | Fallido | Aprobado |
+| CKV2_AWS_62 | Se habilitaron las notificaciones de S3 mediante EventBridge. | Fallido | Aprobado |
+| CKV2_AWS_61 | Se añadieron reglas de ciclo de vida para cargas incompletas y versiones previas. | Fallido | Aprobado |
+| CKV_AWS_144 | Se configuró la replicación a un bucket versionado de otra región, incluyendo objetos cifrados con KMS. | Fallido | Aprobado |
+
+Los destinos de registros y réplica, las claves KMS y el rol de replicación se reciben como variables. Su existencia y sus permisos quedan fuera de la verificación estática de esta práctica.
+
+```bash
+checkov -d infra --framework terraform --compact --skip-download --quiet
+echo "Código de salida de Checkov: $?"
+```
+
+![Figura 10. Escaneo estático de Terraform tras la remediación](capturas/09-remediacion-terraform.png)
+
+*Figura 10. Checkov registró 16 controles aprobados, 0 fallidos, 0 omitidos y código de salida 0.*
+
+El gate local combinado también devolvió `0` con 47 controles de Dockerfile y 16 de Terraform aprobados. Queda pendiente la ejecución del gate en el PR de remediación.
 
 ## 7. Excepción
 
