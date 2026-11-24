@@ -1,0 +1,51 @@
+name: Seguridad IaC
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  iac:
+    name: Escaneo IaC
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar Checkov
+        run: python -m pip install checkov==3.4.5
+
+      - name: Generar reporte SARIF
+        run: |
+          checkov -d . --skip-path '^entregables/' --framework dockerfile terraform             --skip-download --soft-fail -o sarif --output-file-path reportes
+
+      - name: Publicar artefacto SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: iac-sarif
+          path: reportes/results_sarif.sarif
+          if-no-files-found: error
+
+      - name: Publicar en Code Scanning
+        if: ${{ !github.event.repository.private && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: reportes/results_sarif.sarif
+          category: iac-checkov
+
+      - name: Gate Checkov
+        if: ${{ !cancelled() }}
+        run: |
+          checkov -d . --skip-path '^entregables/' --framework dockerfile terraform             --skip-download --compact --quiet
