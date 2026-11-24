@@ -1,0 +1,56 @@
+name: Seguridad IaC
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  iac:
+    name: Escaneo IaC
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar herramientas con version fija
+        run: pip install checkov==3.4.5 ansible-core==2.22.0 ansible-lint==26.11.0
+
+      - name: Checkov - reporte SARIF
+        run: |
+          mkdir -p reportes
+          checkov -d infra -d docker \
+            --external-checks-dir politicas \
+            -o sarif --output-file-path reportes --soft-fail
+
+      - name: Publicar en Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reportes/results_sarif.sarif
+          category: iac-checkov
+
+      - name: Conservar reportes SARIF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iac-sarif
+          path: reportes/
+          if-no-files-found: warn
+
+      - name: Gate Checkov
+        run: |
+          checkov -d infra -d docker \
+            --external-checks-dir politicas --compact --quiet
+

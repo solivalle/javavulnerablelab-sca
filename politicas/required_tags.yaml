@@ -1,0 +1,13 @@
+metadata:
+  id: "CKV_ORG_1"
+  name: "Require mandatory organization tags on AWS resources"
+  category: "GENERAL_SECURITY"
+
+definition:
+  cond_type: "attribute"
+  resource_types:
+    - "aws_s3_bucket"
+    - "aws_security_group"
+  attribute: "tags"
+  operator: "exists"
+
