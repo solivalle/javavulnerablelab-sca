@@ -176,7 +176,19 @@ echo "Código de salida de Checkov: $?"
 
 *Figura 10. Checkov registró 16 controles aprobados, 0 fallidos, 0 omitidos y código de salida 0.*
 
-El gate local combinado también devolvió `0` con 47 controles de Dockerfile y 16 de Terraform aprobados. Queda pendiente la ejecución del gate en el PR de remediación.
+El gate local combinado devolvió `0` tras corregir los ocho hallazgos. Con las políticas propias y la excepción de laboratorio, la última verificación local reportó 64 controles aprobados, 0 fallidos y 1 omitido.
+
+![Figura 13. GitHub Actions aprueba el gate de remediación](capturas/12-pr-remediacion-check-verde.png)
+
+*Figura 13. El job Escaneo IaC terminó en verde y completó la publicación del SARIF y el paso Gate Checkov.*
+
+El [PR de remediación #3](https://github.com/solivalle/javavulnerablelab-sca/pull/3) mostró cinco checks aprobados, incluido `Escaneo IaC` como obligatorio. El check de Code Scanning de Checkov pasó y mostró una alerta nueva. La captura no identifica su contenido.
+
+![Figura 14. Checks aprobados en el PR de remediación #3](capturas/13-pr-remediacion-todos-los-checks.png)
+
+*Figura 14. GitHub muestra el check obligatorio en verde y el botón de merge habilitado para `main`.*
+
+Queda pendiente confirmar la fusión del PR en `main`.
 
 ## 7. Excepción
 
